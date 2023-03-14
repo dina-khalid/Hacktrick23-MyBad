@@ -62,12 +62,7 @@ def select_action(state):
 
     if endFlag and count == riddlesCount:
 
-        for i in range(4):
-            newi = state[0][0] + directions[i][0]
-            newj = state[0][1] + directions[i][1]
-            if newi == 9 and newj == 9:
-
-                return actions[i], i
+        
         for i in range(4):
             newi = state[0][0] + directions[i][0]
             newj = state[0][1] + directions[i][1]
@@ -185,7 +180,7 @@ def local_inference(riddle_solvers):
 
 if __name__ == "__main__":
 
-    sample_maze = np.load("Sample7.npy")
+    sample_maze = np.load("Sample9.npy")
     agent_id = "9"  # add your agent id here
 
     manager = MazeManager()

@@ -23,7 +23,6 @@ def binary_to_number(binary):
 
 def cipher_solver(question):
     # calc time
-    start = time.time()
     text = question+"=="
     newtext = base64.b64decode(text)
     # 101000111010101001100111010010000111100001101001011011001010100
@@ -53,14 +52,11 @@ def cipher_solver(question):
         ascii = chr(ascii)
 
         ans += ascii
-    end = time.time()
-    print("Time to cipher: ", end - start)
     return ans
 
 
 def captcha_solver(question):
     # calculate time to solve
-    start_time = time.time()
     captcha_array = []
     captcha_array = np.array(question, dtype=np.uint8)
     captcha_bgr = cv2.cvtColor(captcha_array, cv2.COLOR_GRAY2BGR)
@@ -71,14 +67,11 @@ def captcha_solver(question):
     solution = captcha.solve()
     temp_file.close()
     os.unlink(temp_file.name)
-    end_time = time.time()
-    print("Time to captcha: ", end_time - start_time)
     return solution
 
 
 def pcap_solver(question):
     # calc time
-    start = time.time()
     # Return solution
 
     base64_string = question+"=="
@@ -104,8 +97,6 @@ def pcap_solver(question):
     for dns in list:
         splitedText = dns.split(".")
         editedList.append(splitedText[1])
-    end = time.time()
-    print("Time to pcap: ", end - start)
     return base64.b64decode(''.join(editedList)).decode("ISO-8859-1")
 
 
