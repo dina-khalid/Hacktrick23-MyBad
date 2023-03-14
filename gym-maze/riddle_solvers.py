@@ -21,10 +21,14 @@ def binary_to_number(binary):
     return number
 
 
+def base64_padding(s):
+    return s + '=' * (4 - len(s) % 4)
+
+
 def cipher_solver(question):
     # calc time
     start = time.time()
-    text = question+"=="
+    text = base64_padding(question)
     newtext = base64.b64decode(text)
     # 101000111010101001100111010010000111100001101001011011001010100
     newtext = str(newtext)
@@ -81,7 +85,7 @@ def pcap_solver(question):
     start = time.time()
     # Return solution
 
-    base64_string = question+"=="
+    base64_string = base64_padding(question)
     pcap_bytes = base64.b64decode(base64_string)
 
     malicious_ip = '188.68.45.12'
@@ -113,9 +117,6 @@ def server_solver(question):
     splitedToken = question.split('.')
     headers = splitedToken[0]
     payload = splitedToken[1]
-
-    def base64_padding(s):
-        return s + '=' * (4 - len(s) % 4)
 
     decoded_bytes = base64.b64decode(base64_padding(headers))
     decoded_string = decoded_bytes.decode('utf-8')
