@@ -11,7 +11,6 @@ from gym_maze.envs.maze_manager import MazeManager
 from riddle_solvers import *
 
 vis = np.zeros((10, 10))
-pro = np.zeros((10, 10, 4))
 prevStates = []
 visRiddles = np.zeros((4))
 lastAction = 0
@@ -21,6 +20,16 @@ count = 0
 total = 0
 endFlag = 0
 riddlesCount = 0
+
+
+def create_maze():
+    maze = np.zeros((10,10), dtype=dict)
+    for i in range(10):
+        for j in range(10):
+            maze[i][j] = {'N':0, 'E':0, 'S':0, 'W':0}
+    return maze
+
+pro = create_maze()
 
 
 def valid(prei, prej, i, j, action):
@@ -47,8 +56,11 @@ def select_action(state):
     global count
     global total
     global endFlag
+    print(total)
     riddlesCount = len(state[-1])
     total += 1
+    indices=[0,1,2,3]
+    random.shuffle(indices)
     actions = ["S", "E","N", "W"]
     directions = [[0, 1], [1, 0],[0, -1], [-1, 0]]
     # print(lastAction)
@@ -64,12 +76,12 @@ def select_action(state):
 
         
         for i in range(4):
-            newi = state[0][0] + directions[i][0]
-            newj = state[0][1] + directions[i][1]
+            idx=indices[i]
+            newi = state[0][0] + directions[idx][0]
+            newj = state[0][1] + directions[idx][1]
             if newi == path[-1][0] and newj == path[-1][1]:
-
                 path.pop()
-                return actions[i], i
+                return actions[idx], idx
 
     elif endFlag and (
         len(path) == 0
@@ -96,12 +108,13 @@ def select_action(state):
     # This function should get actions from your trained agent when inferencing.
 
     for i in range(4):
-        newi = state[0][0] + directions[i][0]
-        newj = state[0][1] + directions[i][1]
+        idx=indices[i]
+        newi = state[0][0] + directions[idx][0]
+        newj = state[0][1] + directions[idx][1]
 
-        if valid(state[0][0], state[0][1], newi, newj, i):
-            lastAction = i
-            return actions[i], i
+        if valid(state[0][0], state[0][1], newi, newj, actions[idx]):
+            lastAction = actions[idx]
+            return actions[idx], idx
 
     prevStates.pop()
     # print(state[0],count)
@@ -179,33 +192,32 @@ def local_inference(riddle_solvers):
 
 
 if __name__ == "__main__":
+        sample_maze = np.load("Sample6.npy")
+        agent_id = "9"  # add your agent id here
 
-    sample_maze = np.load("badmaze.npy")
-    agent_id = "9"  # add your agent id here
+        manager = MazeManager()
+        manager.init_maze(agent_id, maze_cells=sample_maze)
+        env = manager.maze_map[agent_id]
 
-    manager = MazeManager()
-    manager.init_maze(agent_id, maze_cells=sample_maze)
-    env = manager.maze_map[agent_id]
+        riddle_solvers = {
+            "cipher": cipher_solver,
+            "captcha": captcha_solver,
+            "pcap": pcap_solver,
+            "server": server_solver,
+        }
+        maze = {}
+        states = {}
 
-    riddle_solvers = {
-        "cipher": cipher_solver,
-        "captcha": captcha_solver,
-        "pcap": pcap_solver,
-        "server": server_solver,
-    }
-    maze = {} 
-    states = {}
+        maze["maze"] = env.maze_view.maze.maze_cells.tolist()
+        maze["rescue_items"] = list(manager.rescue_items_dict.keys())
 
-    maze["maze"] = env.maze_view.maze.maze_cells.tolist()
-    maze["rescue_items"] = list(manager.rescue_items_dict.keys())
+        MAX_T = 5000
+        RENDER_MAZE = True
 
-    MAX_T = 5000
-    RENDER_MAZE = True
+        local_inference(riddle_solvers)
 
-    local_inference(riddle_solvers)
+        with open("./states.json", "w") as file:
+            json.dump(states, file)
 
-    with open("./states.json", "w") as file:
-        json.dump(states, file)
-
-    with open("./maze.json", "w") as file:
-        json.dump(maze, file)
+        with open("./maze.json", "w") as file:
+            json.dump(maze, file)

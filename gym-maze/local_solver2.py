@@ -38,7 +38,7 @@ def valid(prei, prej, i, j, action):
         and j >= 0
         and j <= 9
         and vis[i][j] < 3
-        and pro[prei][prej][action] == 0
+        and pro[prei][prej][action] != 1
     )
 
 
@@ -51,7 +51,7 @@ def validBFS(prei, prej, i, j, action):
         and i <= 9
         and j >= 0
         and j <= 9
-        and vis[i][j] == 1
+        and vis[i][j] >= 1
         and pro[prei][prej][action] == 0
         and bfsArray[i][j] > bfsArray[prei][prej] + 1
     )
@@ -67,18 +67,22 @@ def sumH(state):
 def BFS(x, y):
     global actions
     global directions
+    global bfsArray
     for i in range(10):
         for j in range(10):
             bfsArray[i][j] = 1e9
     bfsArray[x][y] = 0
 
-    q = Queue(maxsize=100)
+    q = Queue(maxsize=200)
     q.put([x, y])
     while not q.qsize() == 0:
         node = q.get()
+        print(node)
+        print(q.qsize())
         for i in range(4):
             newi = node[0] + directions[i][0]
             newj = node[1] + directions[i][1]
+            print(f"{newi} - {newj}")
             if validBFS(node[0], node[1], newi, newj, i):
                 bfsArray[newi][newj] = bfsArray[node[0]][node[1]] + 1
                 q.put([newi, newj])
@@ -94,35 +98,50 @@ def getBFSPath(start, end):
     bfsArray[start[0]][start[1]] = 0
 
     q = Queue(maxsize=100)
-    q.put([start[0], start[1]])
-    while not q.qsize() == 0:
+    q.put((start[0], start[1]))
+    print("nodeeeeeeeeeeeee")
+    while q.qsize() != 0:
         node = q.get()
+        print(node)
+        print(f"size {q.qsize()}")
         for i in range(4):
             newi = node[0] + directions[i][0]
             newj = node[1] + directions[i][1]
+            print(f"{newi} - {newj} - {validBFS(node[0], node[1], newi, newj, i)}")
             if validBFS(node[0], node[1], newi, newj, i):
                 bfsArray[newi][newj] = bfsArray[node[0]][node[1]] + 1
                 parent[newi][newj] = node
                 q.put([newi, newj])
 
+    if end[0] == 9 and end[1] == 9:
+        print(vis.T)
+        print(bfsArray.T)
+
     path.clear()
-    currentNodeX = end[0]
-    currentNodeY = end[1]
+    currentNodeX = int(end[0])
+    currentNodeY = int(end[1])
+    print("mm")
+    print(start)
     while currentNodeX != start[0] or currentNodeY != start[1]:
-        path.append([currentNodeX, currentNodeY])
+        if currentNodeX or currentNodeY:
+            print(currentNodeX)
+            print(currentNodeY)
+        path.append((currentNodeX, currentNodeY))
         tmp = parent[currentNodeX][currentNodeY]
-        currentNodeX = tmp[0]
-        currentNodeY = tmp[1]
+        currentNodeX = int(tmp[0])
+        currentNodeY = int(tmp[1])
     path = path[::-1]
 
 
 def getDistances(x, y, rescues):
     distance = 0
+    minimumD=1e9
     for i in range(len(rescues)):
         if rescues[i] == -1:
             continue
         distance += distances[x][y][i]
-    return distance
+        minimumD=min(distance,distances[x][y][i])
+    return distance+minimumD
 
 
 def select_action(state):
@@ -146,6 +165,7 @@ def select_action(state):
     if count == riddlesCount:
         if not endFlag:
             endFlag = 1
+            print("endflag")
             getBFSPath(state[0], [9, 9])
 
         for i in range(4):
@@ -159,15 +179,15 @@ def select_action(state):
         for i in range(len(state[-2])):
             distances[state[0][0]][state[0][1]][i] = state[-2][i]
 
-    if (
-        len(prevStates) > 0
-        and prevStates[-1][0] == state[0][0]
-        and prevStates[-1][1] == state[0][1]
-    ):
-        pro[state[0][0]][state[0][1]][lastAction] = 1
-        pro[state[0][0] + directions[lastAction][0]][
-            state[0][1] + directions[lastAction][1]
-        ][(lastAction + 2) % 4] = 1
+    if len(prevStates) > 0:
+        if prevStates[-1][0] == state[0][0] and prevStates[-1][1] == state[0][1]:
+            pro[state[0][0]][state[0][1]][lastAction] = 1
+            pro[state[0][0] + directions[lastAction][0]][
+                state[0][1] + directions[lastAction][1]
+            ][(lastAction + 2) % 4] = 1
+        else:
+            pro[prevStates[-1][0]][prevStates[-1][1]][lastAction] = 0
+            pro[state[0][0]][state[0][1]][(lastAction + 2) % 4] = 0
 
     # print("before: ",prevStates)
     if len(prevStates) == 0 or not (
@@ -192,10 +212,10 @@ def select_action(state):
             for j in range(10):
                 if not vis[i][j]:
                     continue
-                print(i, end=" ")
-                print(j, end=" ")
-                print(bfsArray[i][j], end=" ")
-                print(getDistances(i, j, state[-2]))
+                # print(i, end=" ")
+                # print(j, end=" ")
+                # print(bfsArray[i][j], end=" ")
+                # print(getDistances(i, j, state[-2]))
                 tmpAns = (
                     total
                     + bfsArray[i][j]
@@ -225,7 +245,7 @@ def select_action(state):
     minimumNode = state[0]
     actionIndex = -1
     action = "N"
-    print("*******")
+    # print("*******")
     for i in range(4):
         newi = state[0][0] + directions[i][0]
         newj = state[0][1] + directions[i][1]
@@ -234,18 +254,18 @@ def select_action(state):
         print(valid(state[0][0], state[0][1], newi, newj, i))
         if valid(state[0][0], state[0][1], newi, newj, i):
             tmpAns = (
-                total + 1 + getDistances(newi, newj, state[-2]) + 10 * vis[newi][newj]
+                total + 1 + getDistances(newi, newj, state[-2]) + 5 * vis[newi][newj]
             )
-            print(getDistances(newi, newj, state[-2]), end=" ")
-            print(newi, end=" ")
-            print(newj, end=" ")
-            print(vis[newi][newj])
+            # print(getDistances(newi, newj, state[-2]), end=" ")
+            # print(newi, end=" ")
+            # print(newj, end=" ")
+            # print(vis[newi][newj])
             if tmpAns < minimumAns:
                 minimumAns = tmpAns
                 minimumNode = [newi, newj]
                 action = actions[i]
                 actionIndex = i
-    print("action: ", actionIndex)
+    # print("action: ", actionIndex)
     if actionIndex != -1:
         lastAction = actionIndex
         return action, actionIndex
@@ -266,6 +286,10 @@ def local_inference(riddle_solvers):
     global riddlesCount
     global visRiddles
     global path
+    global pro
+    for i in range(10):
+        for j in range(10):
+            pro[i][j] = -1
     obv = manager.reset(agent_id)
 
     good = 1
@@ -329,7 +353,7 @@ def local_inference(riddle_solvers):
 
 if __name__ == "__main__":
 
-    sample_maze = np.load("Sample9.npy")
+    sample_maze = np.load("Sample6.npy")
     agent_id = "9"  # add your agent id here
 
     manager = MazeManager()
