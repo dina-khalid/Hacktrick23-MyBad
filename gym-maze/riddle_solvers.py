@@ -10,6 +10,7 @@ from scapy.all import *
 from io import BytesIO
 import jwt
 from jwcrypto import jwk
+import re
 
 
 def binary_to_number(binary):
@@ -21,20 +22,24 @@ def binary_to_number(binary):
     return number
 
 
+def base64_padding(s):
+    return s + '=' * (4 - len(s) % 4)
+
+
 def cipher_solver(question):
     # calc time
-    text = question+"=="
+    text = base64_padding(question)
     newtext = base64.b64decode(text)
     # 101000111010101001100111010010000111100001101001011011001010100
-    newtext = str(newtext)
-    newtext = newtext[3:-2]
-    lefttext = newtext[0:-5]
-    righttext = newtext[-4:]
+    newtext = newtext.decode()
+    newtext = newtext.replace("(", "").replace(")", "")
+    newtext = newtext.split(",")
+    lefttext = newtext[0]
+    righttext = newtext[1]
     rightnumber = binary_to_number(righttext)
-    # print(rightnumber)
 
     strings = []
-    for i in range(0, 63, 7):
+    for i in range(0, len(lefttext), 7):
         strings.append(lefttext[i:i+7])
 
     ans = ""
@@ -73,31 +78,38 @@ def captcha_solver(question):
 def pcap_solver(question):
     # calc time
     # Return solution
-
-    base64_string = question+"=="
+    base64_string = base64_padding(question)
     pcap_bytes = base64.b64decode(base64_string)
-
-    malicious_ip = '188.68.45.12'
 
     pcap_packets = rdpcap(BytesIO(pcap_bytes))
 
     dns_packets = [
         packet for packet in pcap_packets if packet.haslayer("ICMP")]
 
-    list = []
+    li = []
     for packet in dns_packets:
-        list.append(packet["ICMP"].qd.qname.decode())
+        li.append(packet["ICMP"].qd.qname.decode())
 
     def get_subdomain(domain):
         parts = domain.split('.')
         return parts[0] if len(parts) > 1 else ''
 
-    list = sorted(list, key=get_subdomain)
+    li.sort(key=get_subdomain)
     editedList = []
-    for dns in list:
+    for dns in li:
         splitedText = dns.split(".")
-        editedList.append(splitedText[1])
-    return base64.b64decode(''.join(editedList)).decode("ISO-8859-1")
+        base = ""
+        if(splitedText[0] == "NA"):
+            base += splitedText[0]
+            base += splitedText[1]
+        else:
+            base += splitedText[1]
+        editedList.append(base)
+    solution = base64.b64decode(base64_padding(
+        ''.join(editedList))).decode("ISO-8859-1")
+    # filteredSolution = re.sub(r'\W+', '', solution)
+    filteredSolution = ''.join(c for c in solution if c.isalnum())
+    return filteredSolution
 
 
 def server_solver(question):
@@ -105,28 +117,20 @@ def server_solver(question):
     headers = splitedToken[0]
     payload = splitedToken[1]
 
-    def base64_padding(s):
-        return s + '=' * (4 - len(s) % 4)
-
     decoded_bytes = base64.b64decode(base64_padding(headers))
-    decoded_string = decoded_bytes.decode('utf-8')
-    headers = json.loads(decoded_string)
+    headers = json.loads(decoded_bytes.decode('utf-8'))
 
     decoded_bytes = base64.b64decode(base64_padding(payload))
-    decoded_string = decoded_bytes.decode('utf-8')
-    payload = json.loads(decoded_string)
+    payload = json.loads(decoded_bytes.decode('utf-8'))
 
-    new_payload = {
-        **payload,
-        "admin": True
-    }
+    new_payload = {key: value for key, value in payload.items()}
+    new_payload["admin"] = "true"
 
     private_key = jwk.JWK.generate(kty="RSA", size=2048, kid=headers["kid"])
-    public_key = private_key.export(False)
+    public_key = json.loads(private_key.export(False))
 
-    public_key = json.loads(public_key)
-
-    header = {'alg': 'RS256', 'kid': headers["kid"], 'jwk': public_key}
+    header = {'alg': 'RS256',
+              'kid': headers["kid"], 'jwk': public_key, 'typ': 'JWT'}
     jwt_token = jwt.encode(new_payload, private_key.export_to_pem(
         private_key=True, password=None), algorithm="RS256", headers=header)
     return jwt_token
