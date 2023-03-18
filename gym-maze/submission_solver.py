@@ -56,8 +56,8 @@ def select_action(state):
     global endFlag
     riddlesCount = len(state[-1])
     total += 1
-    actions = ["S", "E", "N", "W"]
-    directions = [[0, 1], [1, 0], [0, -1], [-1, 0]]
+    actions = ["E", "S", "W", "N"]
+    directions = [[1, 0], [0, 1], [-1, 0], [0, -1]]
     # print(lastAction)
     # print(state[0])
     # This is a random agent
