@@ -11,13 +11,13 @@ from io import BytesIO
 import jwt
 from jwcrypto import jwk
 import re
-
+import datetime
 
 def binary_to_number(binary):
     number = 0
     length = len(binary)
     for i in range(0, length):
-        if(binary[i] == '1'):
+        if (binary[i] == '1'):
             number += 2**(length-i-1)
     return number
 
@@ -27,38 +27,44 @@ def base64_padding(s):
 
 
 def cipher_solver(question):
-    # calc time
+    start=datetime.datetime.now()
     text = base64_padding(question)
     newtext = base64.b64decode(text)
-    # 101000111010101001100111010010000111100001101001011011001010100
     newtext = newtext.decode()
-    newtext = newtext.replace("(", "").replace(")", "")
-    newtext = newtext.split(",")
-    lefttext = newtext[0]
-    righttext = newtext[1]
-    rightnumber = binary_to_number(righttext)
-
-    strings = []
-    for i in range(0, len(lefttext), 7):
-        strings.append(lefttext[i:i+7])
-
-    ans = ""
-
-    for i in strings:
-        ascii = binary_to_number(i)
-        if(ascii <= 90):
-            ascii -= rightnumber
-            if(ascii < 65):
-                ascii += 26
+    i=1
+    rightnumber=0
+    k=len(newtext)-2
+    while(newtext[k]!=','):
+        if newtext[k]=='1':
+            rightnumber+=2**(len(newtext)-k-2)
+        k-=1
+    ans=""
+    while newtext[i]!=',':
+        num=0
+        j=i-1
+        end=i+6
+        while j < end:
+            j+=1
+            if newtext[j]=='0':
+                continue
+            num+=2**(7-(j-i)-1)
+        if (num <= 90):
+            num -= rightnumber
+            if (num < 65):
+                num += 26
         else:
-            ascii -= rightnumber
-            if(ascii < 97):
-                ascii += 26
-        ascii = chr(ascii)
-
-        ans += ascii
+            num -= rightnumber
+            if (num < 97):
+                num += 26
+        num = chr(num)
+        ans+=num
+        i+=7        
+    end=datetime.datetime.now()
+    print((end-start)*1000)
     return ans
 
+
+cipher_solver("KDExMDExMDExMDExMDAxMTEwMDEwMDEwMDEwMTAxMDEwMTAxMTEwMTAwMDEwMDEwMTAxMDExMDAxMTAwMDAxMTExMTAxMDEsMTAwMDAp")
 
 def captcha_solver(question):
     # calculate time to solve
@@ -99,7 +105,7 @@ def pcap_solver(question):
     for dns in li:
         splitedText = dns.split(".")
         base = ""
-        if(splitedText[0] == "NA"):
+        if (splitedText[0] == "NA"):
             base += splitedText[0]
             base += splitedText[1]
         else:
