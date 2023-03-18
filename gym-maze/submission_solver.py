@@ -167,6 +167,7 @@ def submission_inference(riddle_solvers):
         if not response.json()['riddleType'] == None:
             solution = riddle_solvers[response.json()['riddleType']](
                 response.json()['riddleQuestion'])
+
             response = solve(agent_id, response.json()['riddleType'], solution)
 
         # THIS IS A SAMPLE TERMINATING CONDITION WHEN THE AGENT REACHES THE EXIT
@@ -181,7 +182,7 @@ def submission_inference(riddle_solvers):
                 #print(0.8 * 4000 / total)
                 #print(4000 / ( total + 3.333333333 * ((9 - state_0[0][0]) + (9 - state_0[0][1]))))
                 # print("---------------")
-                if 0.8 * 4000 / total > 4000 / (total + 3.333333333 * ((9 - state_0[0][0]) + (9 - state_0[0][1]))):
+                if (0.8 * 4000 / total)-3 > 4000 / (total + 3.333333333 * ((9 - state_0[0][0]) + (9 - state_0[0][1]))):
                     #print("total1: ", total)
                     response = requests.post(
                         f'http://{server_ip}:5000/leave', json={"agentId": agent_id})
@@ -189,7 +190,7 @@ def submission_inference(riddle_solvers):
             elif good:
                 #print(0.8 * 4000 / total)
                 #print(4000 / ( total + len(path)))
-                if 0.8 * 4000 / total > 4000 / (total + len(path)):
+                if (0.8 * 4000 / total)-3 > 4000 / (total + len(path)):
                     #print("total2: ", total)
                     response = requests.post(
                         f'http://{server_ip}:5000/leave', json={"agentId": agent_id})
@@ -205,7 +206,7 @@ def submission_inference(riddle_solvers):
 
 if __name__ == "__main__":
 
-    agent_id = "h6vGyCqcVZ"
+    agent_id = "uWv2iMzK1t"
     riddle_solvers = {'cipher': cipher_solver, 'captcha': captcha_solver,
                       'pcap': pcap_solver, 'server': server_solver}
     submission_inference(riddle_solvers)
