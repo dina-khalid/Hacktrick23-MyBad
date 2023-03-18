@@ -49,8 +49,8 @@ def select_action(state):
     global endFlag
     riddlesCount = len(state[-1])
     total += 1
-    actions = ["S", "E","N", "W"]
-    directions = [[0, 1], [1, 0],[0, -1], [-1, 0]]
+    actions = ["E", "S", "W", "N"]
+    directions = [[1, 0], [0, 1], [-1, 0], [0, -1]]
     # print(lastAction)
     # print(state[0])
     # This is a random agent
@@ -62,7 +62,6 @@ def select_action(state):
 
     if endFlag and count == riddlesCount:
 
-        
         for i in range(4):
             newi = state[0][0] + directions[i][0]
             newj = state[0][1] + directions[i][1]
@@ -121,17 +120,19 @@ def local_inference(riddle_solvers):
     global path
     obv = manager.reset(agent_id)
 
-    good=1
+    good = 1
 
     for t in range(MAX_T):
 
         # Select an action
         state_0 = obv
         action, action_index = select_action(state_0)  # Random action
-        obv, reward, terminated, truncated, info = manager.step(agent_id, action)
+        obv, reward, terminated, truncated, info = manager.step(
+            agent_id, action)
 
         if not info["riddle_type"] == None:
-            solution = riddle_solvers[info["riddle_type"]](info["riddle_question"])
+            solution = riddle_solvers[info["riddle_type"]](
+                info["riddle_question"])
             obv, reward, terminated, truncated, info = manager.solve_riddle(
                 info["riddle_type"], agent_id, solution
             )
@@ -141,25 +142,25 @@ def local_inference(riddle_solvers):
             if state_0[-1][i][0] == 0 and state_0[-1][i][1] == 0 and visRiddles[i] == 0:
                 count += 1
                 visRiddles[i] = 1
-        
+
         if count == riddlesCount:
             if len(path) == 0:
                 #print(0.8 * 4000 / total)
                 #print(4000 / ( total + 3.333333333 * ((9 - state_0[0][0]) + (9 - state_0[0][1]))))
-                #print("---------------")
-                if 0.8 * 4000 / total > 4000 / ( total + 3.333333333 * ((9 - state_0[0][0]) + (9 - state_0[0][1]))):
-                    print("total1: ", total) 
+                # print("---------------")
+                if 0.8 * 4000 / total > 4000 / (total + 3.333333333 * ((9 - state_0[0][0]) + (9 - state_0[0][1]))):
+                    print("total1: ", total)
                     manager.set_done(agent_id)
                     break  # Stop Agent
             elif good:
                 #print(0.8 * 4000 / total)
                 #print(4000 / ( total + len(path)))
-                if 0.8 * 4000 / total > 4000 / ( total + len(path)):
-                    print("total2: ", total)    
+                if 0.8 * 4000 / total > 4000 / (total + len(path)):
+                    print("total2: ", total)
                     manager.set_done(agent_id)
                     break  # Stop Agent
                 else:
-                    good=0
+                    good = 0
 
         # THIS IS A SAMPLE TERMINATING CONDITION WHEN THE AGENT REACHES THE EXIT
         # IMPLEMENT YOUR OWN TERMINATING CONDITION
@@ -193,7 +194,7 @@ if __name__ == "__main__":
         "pcap": pcap_solver,
         "server": server_solver,
     }
-    maze = {} 
+    maze = {}
     states = {}
 
     maze["maze"] = env.maze_view.maze.maze_cells.tolist()
