@@ -16,7 +16,12 @@ def base64_padding(s):
     return s + '=' * (4 - len(s) % 4)
 
 
+def base64_padding(s):
+    return s + '=' * (4 - len(s) % 4)
+
+
 def cipher_solver(question):
+
     text = base64_padding(question)
     newtext = base64.b64decode(text)
     newtext = newtext.decode()
@@ -67,8 +72,7 @@ def captcha_solver(question):
 
 
 def pcap_solver(question):
-    # calc time
-    # Return solution
+
     base64_string = base64_padding(question)
     pcap_bytes = base64.b64decode(base64_string)
 
